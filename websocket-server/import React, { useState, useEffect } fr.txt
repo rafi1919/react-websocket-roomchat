@@ -1,0 +1,63 @@
+import React, { useState, useEffect } from 'react';
+import './App.css';
+
+function App() {
+  const [messages, setMessages] = useState([]);
+  const [messageInput, setMessageInput] = useState('');
+  const [socket, setSocket] = useState(null);
+
+  useEffect(() => {
+    const newSocket = new WebSocket('ws://localhost:8080');
+
+    newSocket.onopen = () => {
+      console.log('WebSocket connection established.');
+    };
+
+    newSocket.onmessage = (event) => {
+      const receivedMessage = JSON.parse(event.data);
+      setMessages((prevMessages) => [...prevMessages, receivedMessage]);
+    };
+
+    setSocket(newSocket);
+
+    return () => {
+      newSocket.close();
+    };
+  }, []);
+
+  const sendMessage = () => {
+    if (messageInput.trim() !== '' && socket) {
+      const message = {
+        text: messageInput,
+        timestamp: new Date().toISOString(),
+      };
+      socket.send(JSON.stringify(message));
+      setMessageInput('');
+    }
+  };
+
+  return (
+    <div className="App">
+      <div className="chat-container">
+        <div className="chat-messages">
+          {messages.map((message, index) => (
+            <div key={index} className="message">
+              {message.text} {/* Assuming 'message' is an object with a 'text' property */}
+            </div>
+          ))}
+        </div>
+        <div className="chat-input">
+          <input
+            type="text"
+            placeholder="Type your message..."
+            value={messageInput}
+            onChange={(e) => setMessageInput(e.target.value)}
+          />
+          <button onClick={sendMessage}>Send</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default App;
