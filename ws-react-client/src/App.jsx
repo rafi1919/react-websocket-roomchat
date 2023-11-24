@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { v4 as uuidv4 } from 'uuid';
+
 
 const ChatComponent = () => {
   const [messages, setMessages] = useState([]);
@@ -6,10 +8,11 @@ const ChatComponent = () => {
   const [socket, setSocket] = useState(null);
   const [roomId, setRoomId] = useState('');
   const [isInChat, setIsInChat] = useState(false);
+  const [userId, setUserId] = useState('')
 
   const connectToChat = () => {
-    if (roomId.trim() !== '') {
-      const newSocket = new WebSocket(`ws://localhost:8080/?roomId=${roomId}`);
+    if (roomId.trim() !== '' && userId.trim() !== '') {
+      const newSocket = new WebSocket(`ws://localhost:8082/?roomId=${roomId}&userId=${userId}`);
 
       newSocket.addEventListener('open', () => {
         console.log('WebSocket connection opened');
@@ -43,7 +46,18 @@ const ChatComponent = () => {
 
   const sendMessage = () => {
     if (socket && inputMessage.trim() !== '') {
-      socket?.send(inputMessage);
+      const createAt = new Date().toISOString();
+      const chatId = uuidv4();
+      
+      const messageData = {
+        chatId,
+        userId,
+        roomId,
+        message: inputMessage,
+        createAt,
+      };
+
+      socket.send(JSON.stringify(messageData));
       setInputMessage('');
     }
   };
@@ -52,6 +66,12 @@ const ChatComponent = () => {
     <div>
       {!isInChat ? (
         <div>
+           <label>Enter Your Username:</label>
+          <input
+            type="text"
+            value={userId}
+            onChange={(e) => setUserId(e.target.value)}
+          />
           <label>Enter Room ID:</label>
           <input
             type="text"
