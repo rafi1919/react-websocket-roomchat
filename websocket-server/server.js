@@ -45,7 +45,7 @@ wss.on("connection", (ws, req) => {
             }
         });
 
-        ws.send(`You said in room ${roomId}: ${messageContent}`);
+        ws.send(`${messageContent}`);
     });
 
     ws.on('close', () => {
@@ -75,7 +75,7 @@ function saveMessageToDatabase(chatId, roomId, userId, message, createAt) {
 
 function sendStoredMessages(client, roomId) {
     dbConnection.query(
-        'SELECT * FROM chat_messages WHERE chat_laporan_id = ?',
+        'SELECT * FROM chat_messages WHERE chat_laporan_id = ? ORDER BY chat_create_at',
         [roomId],
         (err, results) => {
             if (err) {
