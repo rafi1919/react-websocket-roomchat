@@ -22,7 +22,7 @@ wss.on("connection", (ws, req) => {
     const url = new URL(req.url, 'http://localhost:8082');
     const roomId = url.searchParams.get('roomId') || 'default';
     const userId = url.searchParams.get('userId') || 'anonymous';
-    const chatId = uuidv4();
+    
 
     console.log(`${userId} connected to room ${roomId}`);
 
@@ -35,6 +35,7 @@ wss.on("connection", (ws, req) => {
     ws.on('message', (message) => {
         console.log(`Received message in room ${roomId}: ${message}`);
         const createAt = new Date().toISOString();
+        const chatId = uuidv4();
 
         saveMessageToDatabase(chatId, roomId, userId, message, createAt);
 
@@ -58,6 +59,7 @@ wss.on("connection", (ws, req) => {
 });
 
 function saveMessageToDatabase(chatId, roomId, userId, message, createAt) {
+
     const messageData = JSON.parse(message)
 
     dbConnection.query(
@@ -90,7 +92,7 @@ function sendStoredMessages(client, roomId) {
                         createAt: row.chat_create_at,
 
                     };
-                    client.send(JSON.stringify(storedMessage.message));
+                    client.send(JSON.stringify(storedMessage));
                 });
             }
         }
