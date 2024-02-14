@@ -1,18 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
-
 const ChatComponent = () => {
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
   const [socket, setSocket] = useState(null);
   const [roomId, setRoomId] = useState('');
   const [isInChat, setIsInChat] = useState(false);
-  const [userId, setUserId] = useState('')
+  const [userId, setUserId] = useState('');
 
   const connectToChat = () => {
     if (roomId.trim() !== '' && userId.trim() !== '') {
-      const newSocket = new WebSocket(`ws://localhost:8082/?roomId=${roomId}&userId=${userId}`);
+      const newSocket = new WebSocket(
+        `ws://localhost:8082/?roomId=${roomId}&userId=${userId}`
+      );
 
       newSocket.addEventListener('open', () => {
         console.log('WebSocket connection opened');
@@ -22,6 +23,7 @@ const ChatComponent = () => {
 
       newSocket.addEventListener('message', (event) => {
         const messageData = event.data;
+        console.log('WebSocket message received:', messageData);
         if (messageData instanceof Blob) {
           const reader = new FileReader();
           reader.onload = function () {
@@ -30,7 +32,10 @@ const ChatComponent = () => {
           };
           reader.readAsText(messageData);
         } else {
-          setMessages((prevMessages) => [...prevMessages, messageData]);
+          setMessages((prevMessages) => [
+            ...prevMessages,
+            JSON.parse(messageData)?.message,
+          ]);
         }
       });
 
@@ -48,13 +53,14 @@ const ChatComponent = () => {
     if (socket && inputMessage.trim() !== '') {
       const createAt = new Date().toISOString();
       const chatId = uuidv4();
-      
+
       const messageData = {
         chatId,
         userId,
         roomId,
         message: inputMessage,
         createAt,
+        chatStatus:2,
       };
 
       socket.send(JSON.stringify(messageData));
@@ -66,7 +72,7 @@ const ChatComponent = () => {
     <div>
       {!isInChat ? (
         <div>
-           <label>Enter Your Username:</label>
+          <label>Enter Your Username:</label>
           <input
             type="text"
             value={userId}
@@ -83,11 +89,7 @@ const ChatComponent = () => {
       ) : (
         <div>
           <div>
-            <ul>
-              {messages.map((message, index) => (
-                <li key={index}>{message}</li>
-              ))}
-            </ul>
+           
           </div>
           <div>
             <input
